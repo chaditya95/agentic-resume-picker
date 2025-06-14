@@ -1,0 +1,1 @@
+Parse the candidate resume and extract relevant skills, education, and experience.

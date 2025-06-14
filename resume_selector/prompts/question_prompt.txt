@@ -1,0 +1,1 @@
+Based on the job description, generate screening questions for the candidate.
