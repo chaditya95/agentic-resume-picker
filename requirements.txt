@@ -1,0 +1,7 @@
+PyQt6
+crewai-sdk
+pdfminer.six
+python-docx
+pydantic
+pytest
+pytest-qt
