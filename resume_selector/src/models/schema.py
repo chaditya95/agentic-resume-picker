@@ -14,3 +14,4 @@ class CandidateReport(BaseModel):
     education: List[str]
     experience: List[CandidateExperience]
     questions: List[str]
+    score: float

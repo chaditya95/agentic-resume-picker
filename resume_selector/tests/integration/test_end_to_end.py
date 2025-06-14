@@ -16,7 +16,13 @@ class DummyQuestionAgent:
         return []
 
 
+class DummyScoringAgent:
+    async def score(self, parsed_resume, jd):
+        return 42.0
+
+
 def test_run_end_to_end():
-    orch = Orchestrator(parsing_agent=DummyParsingAgent(), question_agent=DummyQuestionAgent())
+    orch = Orchestrator(parsing_agent=DummyParsingAgent(), question_agent=DummyQuestionAgent(), scoring_agent=DummyScoringAgent())
     report = orch.run_sync(["res"], "jd")
     assert isinstance(report, CandidateReport)
+    assert report.score == 42.0

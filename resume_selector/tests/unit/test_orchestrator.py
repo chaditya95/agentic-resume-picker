@@ -15,8 +15,14 @@ class DummyQuestionAgent:
         return ["Q1"]
 
 
+class DummyScoringAgent:
+    async def score(self, parsed_resume, jd_text):
+        return 75.0
+
+
 def test_orchestrator():
-    orch = Orchestrator(parsing_agent=DummyParsingAgent(), question_agent=DummyQuestionAgent())
+    orch = Orchestrator(parsing_agent=DummyParsingAgent(), question_agent=DummyQuestionAgent(), scoring_agent=DummyScoringAgent())
     report = orch.run_sync(["resume"], "jd")
     assert report.name == "Jane"
     assert report.questions == ["Q1"]
+    assert report.score == 75.0
