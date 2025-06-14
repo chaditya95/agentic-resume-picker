@@ -1,0 +1,1 @@
+Evaluate the candidate's resume against the job description and output a numeric score between 0 and 100.

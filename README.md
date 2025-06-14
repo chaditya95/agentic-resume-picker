@@ -1,6 +1,6 @@
 # Agentic Resume Picker
 
-This tool helps select resumes that best match a job description using local agents.
+This tool helps select resumes that best match a job description using local CrewAI agents.
 
 ## Usage
 
@@ -14,6 +14,8 @@ This tool helps select resumes that best match a job description using local age
    ```
 3. Drag and drop resume files onto the left pane and load a job description on the right.
 4. Click **Run** to generate a JSON report which can be saved to disk.
+
+The default model is `ollama/llama3`, so ensure the Ollama server is running. The parsing, questioning and scoring steps all rely on CrewAI agents.
 
 To build a standalone executable:
 ```bash
