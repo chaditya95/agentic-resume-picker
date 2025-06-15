@@ -62,13 +62,21 @@ class ScoringAgent:
                 return {"score": 0.0, "reasoning": "Ollama not connected", "strengths": [], "concerns": ["Connection error"], "recommendation": "pass"}
             
             # Format the input
+            skills = parsed_resume.get('skills', [])
+            # Handle case where skills might be a list of dictionaries
+            if skills and isinstance(skills, list) and skills and isinstance(skills[0], dict):
+                skills_list = [s.get('name', '') for s in skills if isinstance(s, dict) and 'name' in s]
+                skills_str = ', '.join(skills_list)
+            else:
+                skills_str = ', '.join(str(s) for s in skills) if skills else 'No skills listed'
+                
             resume_summary = f"""
-                                Candidate: {parsed_resume.get('name', 'Unknown')}
-                                Skills: {', '.join(parsed_resume.get('skills', []))}
-                                Experience: {len(parsed_resume.get('experience', []))} positions
-                                Education: {', '.join(parsed_resume.get('education', []))}
-                                Summary: {parsed_resume.get('summary', 'No summary available')}
-                            """
+Candidate: {parsed_resume.get('name', 'Unknown')}
+Skills: {skills_str}
+Experience: {len(parsed_resume.get('experience', []))} positions
+Education: {', '.join(str(e) for e in parsed_resume.get('education', [])) if parsed_resume.get('education') else 'Not specified'}
+Summary: {parsed_resume.get('summary', 'No summary available')}
+""".strip()
             
             prompt = f"Job Description:\n{jd_text}\n\nCandidate Profile:\n{resume_summary}"
             
