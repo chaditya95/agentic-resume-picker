@@ -1,0 +1,21 @@
+{
+    "ollama": {
+      "base_url": "http://localhost:11434",
+      "model": "llama3.1:8b",
+      "timeout": 60
+    },
+    "ui": {
+      "window_width": 1400,
+      "window_height": 900,
+      "theme": "default"
+    },
+    "processing": {
+      "max_concurrent_resumes": 3,
+      "retry_attempts": 2,
+      "timeout_per_resume": 120
+    },
+    "export": {
+      "include_full_text": false,
+      "format_version": "2.0"
+    }
+  }
