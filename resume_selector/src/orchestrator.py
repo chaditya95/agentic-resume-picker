@@ -5,12 +5,12 @@ from typing import List, Optional, Callable, Dict, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 
-from .agents.parsing_agent import ParsingAgent
-from .agents.question_agent import QuestionAgent
-from .agents.scoring_agent import ScoringAgent
-from .models.schema import CandidateReport, CandidateExperience
-from .utils.ollama_client import OllamaClient
-from .utils.file_io import load_resumes
+from resume_selector.src.agents.parsing_agent import ParsingAgent
+from resume_selector.src.agents.question_agent import QuestionAgent
+from resume_selector.src.agents.scoring_agent import ScoringAgent
+from resume_selector.src.models.schema import CandidateReport, CandidateExperience
+from resume_selector.src.utils.ollama_client import OllamaClient
+from resume_selector.src.utils.file_io import load_resumes
 from pathlib import Path
 
 logger = logging.getLogger(__name__)

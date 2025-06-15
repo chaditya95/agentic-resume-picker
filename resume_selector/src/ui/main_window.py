@@ -15,12 +15,12 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QDragEnterEvent, QDropEvent
 
-from ..orchestrator import Orchestrator
-from ..config import Config
-from ..utils.ollama_client import OllamaClient
-from ..utils.file_io import is_supported_file, load_resume
-from .widgets import ResumeListWidget
-from .dialogs import open_file
+from resume_selector.src.orchestrator import Orchestrator
+from resume_selector.src.config import Config
+from resume_selector.src.utils.ollama_client import OllamaClient
+from resume_selector.src.utils.file_io import is_supported_file, load_resume
+from resume_selector.src.ui.widgets import ResumeListWidget
+from resume_selector.src.ui.dialogs import open_file
 
 logger = logging.getLogger(__name__)
 
