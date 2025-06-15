@@ -755,7 +755,7 @@ class MainWindow(QMainWindow):
             self.table_results.selectRow(0)
     
     def on_result_selected(self):
-        """Handle result selection"""
+        """Handle result selection and update resume preview"""
         selected_rows = self.table_results.selectionModel().selectedRows()
         if not selected_rows:
             return
@@ -763,7 +763,93 @@ class MainWindow(QMainWindow):
         row = selected_rows[0].row()
         if 0 <= row < len(self.current_results):
             result = self.current_results[row]
+            
+            # Update candidate details (existing functionality)
             self.display_candidate_details(result)
+            
+            # Update resume preview based on selected candidate
+            self.update_resume_preview_for_candidate(result)
+    
+    def update_resume_preview_for_candidate(self, result):
+        """Update resume preview when a candidate is selected"""
+        try:
+            # Get the filename from the result
+            if hasattr(result, 'filename'):
+                filename = result.filename
+            else:
+                filename = result.get('filename', '')
+            
+            if not filename:
+                # Fallback: use candidate name to find resume
+                candidate_name = result.name if hasattr(result, 'name') else result.get('name', '')
+                filename = self.find_resume_by_candidate_name(candidate_name)
+            
+            if filename:
+                # Find the matching resume path
+                matching_path = None
+                for path in self.resume_paths:
+                    if path.name == filename or (hasattr(result, 'name') and path.name.startswith(result.name.split()[0])):
+                        matching_path = path
+                        break
+                
+                if matching_path:
+                    # Load and display the resume
+                    from ..utils.file_io import load_resume
+                    content, success = load_resume(matching_path)
+                    
+                    if success and content:
+                        self.text_resume_preview.setPlainText(content)
+                        self.label_current_resume.setText(f"📋 {matching_path.name}")
+                        
+                        # Highlight the corresponding item in the resume list
+                        self.highlight_resume_in_list(matching_path.name)
+                        
+                        logger.info(f"Updated preview for candidate: {result.name if hasattr(result, 'name') else result.get('name')}")
+                    else:
+                        self.text_resume_preview.setPlainText("Failed to load resume content")
+                        logger.warning(f"Failed to load resume for: {filename}")
+                else:
+                    self.text_resume_preview.setPlainText("Resume file not found")
+                    logger.warning(f"Could not find resume file: {filename}")
+            else:
+                self.text_resume_preview.setPlainText("No resume file associated with this candidate")
+                logger.warning("No filename found for selected candidate")
+                
+        except Exception as e:
+            logger.error(f"Error updating resume preview for candidate: {e}")
+            self.text_resume_preview.setPlainText(f"Error loading resume: {str(e)}")
+    
+    def find_resume_by_candidate_name(self, candidate_name):
+        """Find resume filename by candidate name"""
+        try:
+            if not candidate_name:
+                return None
+            
+            # Try to match by first name or last name
+            name_parts = candidate_name.lower().split()
+            
+            for path in self.resume_paths:
+                filename_lower = path.name.lower()
+                # Check if any part of the name appears in the filename
+                for name_part in name_parts:
+                    if len(name_part) > 2 and name_part in filename_lower:
+                        return path.name
+            
+            return None
+        except Exception as e:
+            logger.error(f"Error finding resume by name: {e}")
+            return None
+    
+    def highlight_resume_in_list(self, filename):
+        """Highlight the corresponding resume in the left panel list"""
+        try:
+            for i in range(self.resume_list.count()):
+                item = self.resume_list.item(i)
+                if item and item.text() == filename:
+                    self.resume_list.setCurrentRow(i)
+                    break
+        except Exception as e:
+            logger.error(f"Error highlighting resume in list: {e}")
     
     def display_candidate_details(self, result):
         """Display detailed candidate information"""
@@ -845,6 +931,9 @@ class MainWindow(QMainWindow):
 """
             
             self.text_details.setHtml(details)
+            
+            # Update the resume preview for this candidate
+            self.update_resume_preview_for_candidate(result)
             
         except Exception as e:
             logger.error(f"Error displaying candidate details: {e}")
