@@ -456,17 +456,26 @@ class MainWindow(QMainWindow):
         self.progress_bar.setValue(current)
         self.status_bar.showMessage(f"Processing {current}/{total}: {filename}")
     
-    def on_processing_complete(self, results: List):
+    def on_processing_complete(self, results):
         """Handle processing completion"""
-        self.current_results = results
+        logger.info(f"Processing complete with {len(results) if isinstance(results, list) else 1} results")
+        
+        # Ensure results is a list
+        if isinstance(results, list):
+            self.current_results = results
+        elif results:  # Single result
+            self.current_results = [results]
+        else:
+            self.current_results = []
+        
         self.populate_results_table()
         self.finish_processing()
         
-        if results:
+        if self.current_results:
             self.btn_export.setEnabled(True)
             QMessageBox.information(
                 self, "Analysis Complete",
-                f"Successfully analyzed {len(results)} candidates!"
+                f"Successfully analyzed {len(self.current_results)} candidates!"
             )
         else:
             QMessageBox.warning(
@@ -489,33 +498,75 @@ class MainWindow(QMainWindow):
         self.check_ready_state()
     
     def populate_results_table(self):
-        """Populate results table"""
+        """Populate results table with analysis results"""
+        if not self.current_results:
+            logger.warning("No results to populate")
+            return
+        
+        # Ensure current_results is a list
+        if not isinstance(self.current_results, list):
+            logger.error(f"Expected list but got {type(self.current_results)}")
+            return
+        
         self.table_results.setRowCount(len(self.current_results))
         
         for row, result in enumerate(self.current_results):
-            # Candidate name
-            name_item = QTableWidgetItem(result.name)
-            self.table_results.setItem(row, 0, name_item)
-            
-            # Score with color coding
-            score_item = QTableWidgetItem(f"{result.score:.1f}")
-            score_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            
-            # Color code by score
-            if result.score >= 80:
-                score_item.setBackground(Qt.GlobalColor.green)
-            elif result.score >= 60:
-                score_item.setBackground(Qt.GlobalColor.yellow)
-            else:
-                score_item.setBackground(Qt.GlobalColor.red)
-            
-            self.table_results.setItem(row, 1, score_item)
-            
-            # Recommendation
-            rec_item = QTableWidgetItem(result.recommendation.title())
-            rec_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.table_results.setItem(row, 2, rec_item)
-            
+            try:
+                # Handle both CandidateReport objects and dictionaries
+                if hasattr(result, 'name'):
+                    # It's a CandidateReport object
+                    name = result.name
+                    score = result.score
+                    recommendation = getattr(result, 'recommendation', 'unknown')
+                    skills = getattr(result, 'skills', [])
+                elif isinstance(result, dict):
+                    # It's a dictionary
+                    name = result.get('name', 'Unknown')
+                    score = result.get('score', 0.0)
+                    recommendation = result.get('recommendation', 'unknown')
+                    skills = result.get('skills', [])
+                else:
+                    logger.error(f"Unexpected result type at row {row}: {type(result)}")
+                    continue
+                
+                # Candidate name
+                name_item = QTableWidgetItem(str(name))
+                self.table_results.setItem(row, 0, name_item)
+                
+                # Score with color coding
+                score_item = QTableWidgetItem(f"{float(score):.1f}")
+                score_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                
+                # Color code by score
+                if score >= 80:
+                    score_item.setBackground(Qt.GlobalColor.green)
+                elif score >= 60:
+                    score_item.setBackground(Qt.GlobalColor.yellow)
+                else:
+                    score_item.setBackground(Qt.GlobalColor.red)
+                
+                self.table_results.setItem(row, 1, score_item)
+                
+                # Recommendation
+                rec_item = QTableWidgetItem(str(recommendation).title())
+                rec_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.table_results.setItem(row, 2, rec_item)
+                
+                # Top skills
+                if isinstance(skills, list) and skills:
+                    skills_text = ", ".join(str(s) for s in skills[:3])
+                    if len(skills) > 3:
+                        skills_text += "..."
+                else:
+                    skills_text = "No skills listed"
+                skills_item = QTableWidgetItem(skills_text)
+                self.table_results.setItem(row, 3, skills_item)
+                
+            except Exception as e:
+                logger.error(f"Error populating row {row}: {e}")
+                # Add error row
+                error_item = QTableWidgetItem(f"Error: {str(e)}")
+                self.table_results.setItem(row, 0, error_item)
             # Top skills
             skills_text = ", ".join(result.skills[:3])
             if len(result.skills) > 3:

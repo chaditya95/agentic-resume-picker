@@ -1,0 +1,68 @@
+Job description
+Built on meritocracy, our unique company culture rewards self-starters and those who are committed to doing what is best for our customers.
+
+Brown & Brown is an independent insurance intermediary that through its licensed subsidiaries provides a variety of insurance and reinsurance products and services to corporate, public entity, institutional, trade, professional, association, and individual clients. Headquartered in Daytona Beach, Florida, offices are located across the United States, with products and services offered through four major business divisions. We are listed on the NYSE at BRO. Our drive to be the best has made Brown & Brown one of the largest and most respected independent insurance intermediaries in the nation, with over 75 years of continuous service. The Company is ranked as the sixth largest such organization in the United States and seventh in the World by Business Insurance magazine.
+
+The AI Engineer is a member of the Enterprise Data Enablement team reporting to the Sr. Director, Enterprise Data Enablement. The Generative AI Engineer will, support enterprise and one or more divisions of Brown & Brown, in developing, designing, and maintaining cutting-edge AI-based systems, ensuring smooth and engaging user experiences. Additionally, the Generative AI Engineer will participate in a wide variety of Natural Language Processing activities, including refining and optimizing prompts to improve the outcome of Large Language Models (LLMs), and code and design review. They will serve as a mentor and subject matter expert for the embedded delivery, data and analytics teams within the division.
+
+Essential Duties and Responsibilities:
+
+Following is a summary of the essential functions for this job. Other duties may be assigned.
+• Partner with embedded delivery, analytics and data science teams to understand their business objectives and strategic initiatives.
+• Serve as a consultant to embedded delivery, analytics and data science teams in the development of their Gen AI solution including the ideation, design and implementation of it.
+• Work with leadership and stakeholders to identify AI opportunities and promote strategy.
+• Contribute to development and promotion of Responsible AI standards across the community
+• Ensure Gen AI solutions adhere to relevant policies, standards, procedures and patterns.
+• Collaborate with other engineers to integrate your generative AI solution into existing systems or develop new applications. This might involve creating APIs for the Gen AI application.
+• Provide leadership and oversight of third-party resources and services in the design and delivery of Gen AI solutions as needed.
+• Collaborate with other product managers, and stakeholders to deliver prompt solutions that meet user needs and expectations.
+• Utilize prompt practices that promote responsible and ethical AI and help mitigate risk of biases in Gen AI model responses.
+• Research new prompt techniques and tools to enhance skills and improve prompt quality.
+• Partner with the Enterprise Data Architecture, Enterprise Data Platform, Security and Cloud Services teams to architect, develop and implement Gen AI solutions according to Brown & Brown best practices and standards.
+• Work well with co-located and distributed team members and partners.
+• Demonstrate a high degree of creativity and problem-solving skills.
+• Mentor and provide guidance to Data Engineers with respect to Gen AI architecture patterns, technologies and solutions.
+
+Required:
+• Bachelor’s degree in computer science or related field or equivalent work experience.
+• 5+ years of Experience in end-to-end Software Development Life Cycle (SDLC) projects.
+• 5+ years of Experience working with cloud computing platforms (e.g., Azure, Google Cloud) and containerization technologies (e.g., Docker, Kubernetes).
+• 1+ years of demonstrated experience with Natural Language Processing (NLP) and Large Language Models (LLM)
+• 1+ years of demonstrated experience in Vector Database and Model Development
+• 3+ years of experience building and maintaining scalable API solutions
+• Experience working with RAG technologies and LLM frameworks (PromptFlow, Langchain), LLM model registries (Hugging Face), LLM APIs, embedding models, and vector databases (PostgreSQL, Cosmos DB, etc.)
+• Proven experience in designing and integrating AI/GenAI solutions with other products.
+• Programming Proficiency: Fluency in C#, Python, and familiarity with other relevant languages (e.g., Java, C++).
+• Expertise in AI Application Development: Proven ability to design, develop, and deploy real-world AI applications in production environment.
+• Generative AI Proficiency: Deep understanding of generative AI models and experience in utilizing them for creative content generation.
+• Excellent communication and presentation skills with the ability to engage clients and convey complex AI concepts in an understandable manner.
+• Good knowledge of Industry AI use cases
+• Experience driving DevOps and MLOps practices, covering continuous integration, deployment, and monitoring of AI
+• Strong understanding of designing and delivering solutions in a cloud environment.
+• Passion for learning new technologies and enhancing existing skills.
+• Experience working with key stakeholders and business leaders.
+• Ability to build strong relationships and work collaboratively on teams.
+• Self-starter that works well and is able to be a leader in a matrixed team environment.
+• Ability to adapt and respond in a rapidly evolving business environment.
+
+Preferred:
+• Experience designing and delivering solutions in an Azure cloud environment.
+• Experience in full stack development definite plus
+• Experience with Azure Databricks, Azure AI/ML workflows
+• Experience with SQL, Java and Python, React framework.
+• Proficiency in HTML, CSS, and JavaScript
+• Experience working with Agile/Scrum methodologies.
+• A portfolio of successful AI projects and a record of thought leadership in the field is a plus.
+• Microsoft Azure Solutions Architect Expert, Azure Data Engineer Associate or equivalent certification(s).
+• Experience in the insurance industry and/or basic knowledge of insurance.
+
+What we offer:
+• Excellent growth and advancement opportunities
+• Competitive pay based on experience.
+• Discretionary Time Off (DTO)
+• Generous benefits package: health, dental, vision, 401(k), etc.
+• Employee Stock Purchase Plan
+• Tuition Reimbursement and Student Loan Repayment Assistance
+• Mental Health Resources
+
+We are an Equal Opportunity Employer. We take pride in the diversity of our team and seek diversity in our applicants.

@@ -100,48 +100,85 @@ class Orchestrator:
             logger.error(f"Error processing resume {filename}: {e}")
             return None
     
-    async def run(self, resume_paths: List[Path], jd_text: str) -> List[CandidateReport]:
-        """Run the orchestrator on multiple resumes"""
-        logger.info(f"Starting orchestrator with {len(resume_paths)} resumes")
-        
-        if not self.check_ollama_connection():
-            raise RuntimeError("Ollama connection failed")
-        
-        # Load resume contents
-        resume_data = load_resumes(resume_paths)
-        logger.info(f"Successfully loaded {len(resume_data)} resumes")
-        
+    async def run(self, resumes: List[str], jd_text: str) -> List[CandidateReport]:
+        logger.info("Running orchestrator with %d resumes and model %s", len(resumes), self.model)
         results = []
-        total = len(resume_data)
         
-        # Process each resume
-        for i, (filename, content) in enumerate(resume_data):
+        for i, resume_text in enumerate(resumes, 1):
             try:
-                # Update progress
                 if self.progress_callback:
-                    self.progress_callback(i, total, filename)
+                    self.progress_callback(i, len(resumes), f"Resume {i}")
                 
-                # Process resume
-                report = await self.process_single_resume(content, filename, jd_text)
-                if report:
-                    results.append(report)
+                # Parse resume
+                parsed = await self.parsing_agent.parse(resume_text)
+                logger.info(f"Parsed result for resume {i}: {parsed}")
+                
+                if not parsed or parsed.get('name') == 'Unknown':
+                    logger.warning(f"Failed to parse resume {i}")
+                    continue
+                
+                # Generate questions
+                questions_data = await self.question_agent.generate_questions(jd_text)
+                questions = [q.get('question', str(q)) for q in questions_data if q]
+                
+                # Score candidate
+                score_result = await self.scoring_agent.score(parsed, jd_text)
+                logger.info(f"Score result for resume {i}: {score_result}")
+                
+                # Handle different score result formats
+                if isinstance(score_result, dict):
+                    score = score_result.get('score', 0.0)
+                else:
+                    try:
+                        score = float(score_result)
+                    except (ValueError, TypeError):
+                        score = 0.0
+                
+                # Create experience objects
+                experience_list = []
+                for exp in parsed.get('experience', []):
+                    if isinstance(exp, dict):
+                        experience_list.append(CandidateExperience(
+                            company=exp.get('company', ''),
+                            position=exp.get('position', ''),
+                            duration=exp.get('duration', '')
+                        ))
+                
+                # Create report
+                report = CandidateReport(
+                    name=parsed.get('name', 'Unknown'),
+                    skills=parsed.get('skills', []),
+                    education=parsed.get('education', []),
+                    experience=experience_list,
+                    questions=questions,
+                    score=score,
+                    reasoning=score_result.get('reasoning', '') if isinstance(score_result, dict) else '',
+                    strengths=score_result.get('strengths', []) if isinstance(score_result, dict) else [],
+                    concerns=score_result.get('concerns', []) if isinstance(score_result, dict) else [],
+                    recommendation=score_result.get('recommendation', 'pass') if isinstance(score_result, dict) else 'pass'
+                )
+                
+                logger.info(f"Created report for {report.name}")
+                results.append(report)
                 
             except Exception as e:
-                logger.error(f"Error processing {filename}: {e}")
-        
-        # Final progress update
-        if self.progress_callback:
-            self.progress_callback(total, total, "Complete")
-        
-        # Sort by score
-        results.sort(key=lambda x: x.score, reverse=True)
-        
-        logger.info(f"Orchestrator completed. {len(results)} successful results.")
+                logger.error(f"Error processing resume {i}: {e}")
+                continue
+                
         return results
     
     def run_sync(self, resume_paths: List[Path], jd_text: str) -> List[CandidateReport]:
         """Synchronous version of run"""
-        return asyncio.run(self.run(resume_paths, jd_text))
+        # Read resume files before passing to async function
+        resumes = []
+        for path in resume_paths:
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    resumes.append(f.read())
+            except Exception as e:
+                logger.error(f"Error reading resume {path}: {e}")
+        
+        return asyncio.run(self.run(resumes, jd_text))
     
     def run_with_progress(self, resume_paths: List[Path], jd_text: str, 
                          progress_callback: Callable[[int, int, str], None]) -> List[CandidateReport]:
