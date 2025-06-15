@@ -1,1 +1,27 @@
-Parse the candidate resume and extract relevant skills, education, and experience.
+You are an expert resume parser. Your task is to extract structured information from a resume.
+
+Extract the following information from the resume and return it as valid JSON:
+
+{
+  "name": "Full name of the candidate",
+  "email": "Email address if found",
+  "phone": "Phone number if found", 
+  "skills": ["List of technical skills, programming languages, tools"],
+  "education": ["Degree, University, Year"],
+  "experience": [
+    {
+      "company": "Company name",
+      "position": "Job title", 
+      "duration": "Employment period",
+      "description": "Brief description of role"
+    }
+  ],
+  "summary": "Brief professional summary in 1-2 sentences"
+}
+
+Important:
+- Return ONLY valid JSON, no other text
+- If information is not found, use empty string or empty array
+- Extract skills comprehensively (programming languages, frameworks, tools, certifications)
+- For experience, focus on the most recent and relevant positions
+- Keep descriptions concise but informative
