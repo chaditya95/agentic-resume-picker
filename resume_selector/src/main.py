@@ -10,8 +10,8 @@ from PyQt6.QtCore import Qt
 current_dir = Path(__file__).parent
 sys.path.insert(0, str(current_dir))
 
-from ui.main_window import MainWindow
-from config import Config
+from resume_selector.src.ui.main_window import MainWindow
+from resume_selector.src.config import Config
 
 def setup_logging():
     """Setup application logging"""
@@ -43,8 +43,14 @@ def main() -> None:
     app.setOrganizationName("Resume Selector")
     
     # Enable high DPI support
-    app.setAttribute(Qt.ApplicationAttribute.AA_EnableHighDpiScaling, True)
-    app.setAttribute(Qt.ApplicationAttribute.AA_UseHighDpiPixmaps, True)
+    try:
+        # PyQt6
+        from PyQt6.QtCore import Qt
+        app.setAttribute(Qt.ApplicationAttribute.AA_EnableHighDpiScaling, True)
+        app.setAttribute(Qt.ApplicationAttribute.AA_UseHighDpiPixmaps, True)
+    except AttributeError:
+        # PyQt5 or other versions
+        pass
     
     try:
         # Create main window

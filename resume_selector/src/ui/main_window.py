@@ -1,4 +1,6 @@
-"""Enhanced main window with progress tracking and better error handling"""
+"""
+Enhanced Main Window - resume_selector/src/ui/main_window.py
+"""
 import logging
 import json
 from pathlib import Path
@@ -10,13 +12,13 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QSplitter, QTextEdit, QPushButton, 
     QVBoxLayout, QHBoxLayout, QFileDialog, QMessageBox, QProgressBar,
     QLabel, QTableWidget, QTableWidgetItem, QHeaderView, QComboBox,
-    QGroupBox, QTreeWidget, QTreeWidgetItem, QStatusBar, QApplication
+    QGroupBox, QTreeWidget, QTreeWidgetItem, QStatusBar, QApplication,
+    QFrame, QScrollArea
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QDragEnterEvent, QDropEvent
 
 from ..orchestrator import Orchestrator
-from ..config import Config
 from ..utils.ollama_client import OllamaClient
 from ..utils.file_io import is_supported_file, load_resume
 from .widgets import ResumeListWidget
@@ -43,9 +45,8 @@ class ProcessingThread(QThread):
             def progress_callback(current, total, filename):
                 self.progress_updated.emit(current, total, filename)
             
-            results = self.orchestrator.run_with_progress(
-                self.resume_paths, self.jd_text, progress_callback
-            )
+            self.orchestrator.set_progress_callback(progress_callback)
+            results = self.orchestrator.run_sync(self.resume_paths, self.jd_text)
             self.processing_complete.emit(results)
             
         except Exception as e:
@@ -58,175 +59,290 @@ class MainWindow(QMainWindow):
         super().__init__()
         
         # Initialize components
-        self.config = Config()
-        self.ollama_client = OllamaClient(
-            base_url=self.config.get('ollama.base_url', 'http://localhost:11434')
-        )
-        self.orchestrator = Orchestrator(
-            model=self.config.get('ollama.model', 'llama3.1:8b')
-        )
+        self.ollama_client = OllamaClient()
+        self.orchestrator = Orchestrator(model="llama3.1:8b")
         
         # UI state
         self.resume_paths: List[Path] = []
         self.current_results: List = []
         self.processing_thread: Optional[ProcessingThread] = None
         
-        self.setWindowTitle("Resume Selector v2.0")
-        self.setGeometry(100, 100, 
-                        self.config.get('ui.window_width', 1200),
-                        self.config.get('ui.window_height', 800))
+        self.setWindowTitle("Resume Selector v2.0 - AI-Powered Resume Analysis")
+        self.setGeometry(100, 100, 1600, 1000)  # Larger window
         
         self._setup_ui()
         self._check_ollama_connection()
     
     def _setup_ui(self):
-        """Setup the user interface"""
+        """Setup the enhanced user interface"""
         # Create central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         
         # Main layout
         main_layout = QVBoxLayout(central_widget)
+        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(15, 15, 15, 15)
         
-        # Toolbar
-        toolbar = self._create_toolbar()
+        # Top toolbar
+        toolbar = self._create_enhanced_toolbar()
         main_layout.addWidget(toolbar)
         
-        # Content area
-        content_splitter = self._create_content_area()
+        # Main content area with new layout
+        content_splitter = self._create_enhanced_content_area()
         main_layout.addWidget(content_splitter)
         
         # Status bar
-        self._create_status_bar()
+        self._create_enhanced_status_bar()
         
-        # Apply styling
-        self._apply_styling()
+        # Apply modern styling
+        self._apply_modern_styling()
     
-    def _create_toolbar(self) -> QWidget:
-        """Create toolbar with controls"""
-        toolbar = QWidget()
-        layout = QHBoxLayout(toolbar)
+    def _create_enhanced_toolbar(self) -> QWidget:
+        """Create enhanced toolbar with better model selection"""
+        toolbar = QFrame()
+        toolbar.setFrameStyle(QFrame.Shape.StyledPanel)
+        toolbar.setStyleSheet("""
+            QFrame {
+                background-color: #f8f9fa;
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                padding: 10px;
+            }
+        """)
         
-        # Model selection
-        model_group = QGroupBox("AI Model")
-        model_layout = QHBoxLayout(model_group)
+        layout = QHBoxLayout(toolbar)
+        layout.setSpacing(15)
+        
+        # AI Model selection - Enhanced
+        model_group = QGroupBox("🤖 AI Model")
+        model_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                font-size: 14px;
+                color: #495057;
+            }
+        """)
+        model_layout = QVBoxLayout(model_group)
         
         self.combo_model = QComboBox()
         self.combo_model.addItems([
-            "llama3.1:8b", "llama3.1:70b", "llama3.2:3b", 
-            "codellama:13b", "mistral:7b"
+            "llama3.1:8b (Recommended)", 
+            "llama3.1:70b (High Quality)", 
+            "llama3.2:3b (Fast)",
+            "codellama:13b (Code Focus)", 
+            "mistral:7b (Alternative)"
         ])
-        self.combo_model.setCurrentText(self.config.get('ollama.model', 'llama3.1:8b'))
+        self.combo_model.setCurrentText("llama3.1:8b (Recommended)")
+        self.combo_model.setMinimumWidth(200)
+        self.combo_model.setStyleSheet("""
+            QComboBox {
+                padding: 8px 12px;
+                border: 2px solid #e9ecef;
+                border-radius: 6px;
+                background-color: white;
+                font-size: 13px;
+            }
+            QComboBox:focus {
+                border-color: #007bff;
+            }
+        """)
         model_layout.addWidget(self.combo_model)
         
         layout.addWidget(model_group)
         layout.addStretch()
         
-        # Action buttons
+        # Action buttons - Enhanced
+        button_style = """
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #4CAF50, stop:1 #45a049);
+                color: white;
+                border: none;
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-weight: bold;
+                font-size: 14px;
+                min-width: 140px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #45a049, stop:1 #3d8b40);
+            }
+            QPushButton:pressed {
+                background: #3d8b40;
+            }
+            QPushButton:disabled {
+                background: #cccccc;
+                color: #666666;
+            }
+        """
+        
         self.btn_load_jd = QPushButton("📄 Load Job Description")
         self.btn_load_jd.clicked.connect(self.load_jd)
+        self.btn_load_jd.setStyleSheet(button_style)
         layout.addWidget(self.btn_load_jd)
         
-        self.btn_run = QPushButton("▶️ Analyze Resumes")
+        self.btn_run = QPushButton("🚀 Analyze Resumes")
         self.btn_run.clicked.connect(self.run_orchestration)
         self.btn_run.setEnabled(False)
+        self.btn_run.setStyleSheet(button_style.replace("#4CAF50", "#007bff").replace("#45a049", "#0056b3").replace("#3d8b40", "#004085"))
         layout.addWidget(self.btn_run)
         
         self.btn_export = QPushButton("💾 Export Results")
         self.btn_export.clicked.connect(self.export_results)
         self.btn_export.setEnabled(False)
+        self.btn_export.setStyleSheet(button_style.replace("#4CAF50", "#6c757d").replace("#45a049", "#5a6268").replace("#3d8b40", "#495057"))
         layout.addWidget(self.btn_export)
         
         return toolbar
     
-    def _create_content_area(self) -> QSplitter:
-        """Create main content area with three panes"""
-        splitter = QSplitter(Qt.Orientation.Horizontal)
+    def _create_enhanced_content_area(self) -> QSplitter:
+        """Create enhanced content area with new layout"""
+        main_splitter = QSplitter(Qt.Orientation.Horizontal)
+        main_splitter.setHandleWidth(8)
         
-        # Left pane: Resume list
-        left_pane = self._create_left_pane()
-        splitter.addWidget(left_pane)
+        # Left panel (Resume files + Job Description)
+        left_panel = self._create_left_panel()
+        main_splitter.addWidget(left_panel)
         
-        # Center pane: Job description and resume preview
-        center_pane = self._create_center_pane()
-        splitter.addWidget(center_pane)
+        # Center panel (Resume preview) - MAXIMIZED
+        center_panel = self._create_center_panel()
+        main_splitter.addWidget(center_panel)
         
-        # Right pane: Results
-        right_pane = self._create_right_pane()
-        splitter.addWidget(right_pane)
+        # Right panel (Analysis results)
+        right_panel = self._create_right_panel()
+        main_splitter.addWidget(right_panel)
         
-        # Set proportions
-        splitter.setSizes([300, 400, 500])
+        # Set proportions: Left(300), Center(600), Right(500)
+        main_splitter.setSizes([300, 600, 500])
         
-        return splitter
+        return main_splitter
     
-    def _create_left_pane(self) -> QWidget:
-        """Create left pane with resume list"""
+    def _create_left_panel(self) -> QWidget:
+        """Create left panel with resume files and job description"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
+        layout.setSpacing(10)
         
-        # Resume list
-        resume_group = QGroupBox("Resume Files")
+        # Resume files section
+        resume_group = QGroupBox("📁 Resume Files")
         resume_layout = QVBoxLayout(resume_group)
         
         self.resume_list = ResumeListWidget()
         self.resume_list.files_dropped.connect(self.on_files_dropped)
+        self.resume_list.setMinimumHeight(200)
         resume_layout.addWidget(self.resume_list)
         
-        # Add files button
-        btn_add_files = QPushButton("📁 Add Resume Files")
+        # Resume action buttons
+        resume_buttons = QHBoxLayout()
+        
+        btn_add_files = QPushButton("➕ Add Files")
         btn_add_files.clicked.connect(self.add_resume_files)
-        resume_layout.addWidget(btn_add_files)
+        btn_add_files.setStyleSheet("""
+            QPushButton {
+                background-color: #28a745;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #218838; }
+        """)
+        resume_buttons.addWidget(btn_add_files)
         
-        # Clear button
-        btn_clear = QPushButton("🗑️ Clear All")
+        btn_clear = QPushButton("🗑️ Clear")
         btn_clear.clicked.connect(self.clear_resumes)
-        resume_layout.addWidget(btn_clear)
+        btn_clear.setStyleSheet("""
+            QPushButton {
+                background-color: #dc3545;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #c82333; }
+        """)
+        resume_buttons.addWidget(btn_clear)
         
-        layout.addWidget(resume_group)
+        resume_layout.addLayout(resume_buttons)
         
         # Resume count
         self.label_resume_count = QLabel("No resumes loaded")
-        layout.addWidget(self.label_resume_count)
+        self.label_resume_count.setStyleSheet("color: #6c757d; font-style: italic;")
+        resume_layout.addWidget(self.label_resume_count)
         
-        return widget
-    
-    def _create_center_pane(self) -> QWidget:
-        """Create center pane with job description and preview"""
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
+        layout.addWidget(resume_group)
         
-        # Job description section
-        jd_group = QGroupBox("Job Description")
+        # Job Description section (moved to left panel bottom)
+        jd_group = QGroupBox("📄 Job Description")
         jd_layout = QVBoxLayout(jd_group)
         
         self.jd_text = QTextEdit()
         self.jd_text.setPlaceholderText("Load or paste job description here...")
         self.jd_text.textChanged.connect(self.check_ready_state)
+        self.jd_text.setMinimumHeight(200)
+        self.jd_text.setMaximumHeight(300)
         jd_layout.addWidget(self.jd_text)
         
         layout.addWidget(jd_group)
         
-        # Resume preview section  
-        preview_group = QGroupBox("Resume Preview")
+        return widget
+    
+    def _create_center_panel(self) -> QWidget:
+        """Create center panel focused on resume preview"""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setSpacing(10)
+        
+        # Resume preview section - MAXIMIZED
+        preview_group = QGroupBox("📋 Resume Preview")
         preview_layout = QVBoxLayout(preview_group)
+        
+        # Add resume selection info
+        self.label_current_resume = QLabel("Select a resume to preview...")
+        self.label_current_resume.setStyleSheet("""
+            QLabel {
+                color: #495057;
+                font-weight: bold;
+                font-size: 14px;
+                padding: 8px;
+                background-color: #f8f9fa;
+                border-radius: 4px;
+            }
+        """)
+        preview_layout.addWidget(self.label_current_resume)
         
         self.text_resume_preview = QTextEdit()
         self.text_resume_preview.setReadOnly(True)
-        self.text_resume_preview.setPlaceholderText("Select a resume to preview...")
+        self.text_resume_preview.setPlaceholderText("Resume content will appear here...")
+        self.text_resume_preview.setStyleSheet("""
+            QTextEdit {
+                border: 2px solid #e9ecef;
+                border-radius: 8px;
+                padding: 15px;
+                background-color: white;
+                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+                font-size: 12px;
+                line-height: 1.4;
+            }
+        """)
         preview_layout.addWidget(self.text_resume_preview)
         
         layout.addWidget(preview_group)
         
         return widget
     
-    def _create_right_pane(self) -> QWidget:
-        """Create right pane with results"""
+    def _create_right_panel(self) -> QWidget:
+        """Create right panel with analysis results"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
+        layout.setSpacing(10)
         
         # Results table
-        results_group = QGroupBox("Analysis Results")
+        results_group = QGroupBox("📊 Analysis Results")
         results_layout = QVBoxLayout(results_group)
         
         self.table_results = QTableWidget()
@@ -241,35 +357,74 @@ class MainWindow(QMainWindow):
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
-        self.table_results.setColumnWidth(1, 80)
-        self.table_results.setColumnWidth(2, 100)
+        self.table_results.setColumnWidth(1, 70)
+        self.table_results.setColumnWidth(2, 90)
         
         self.table_results.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table_results.itemSelectionChanged.connect(self.on_result_selected)
+        self.table_results.setAlternatingRowColors(True)
+        self.table_results.setMinimumHeight(250)
         
         results_layout.addWidget(self.table_results)
         layout.addWidget(results_group)
         
-        # Details section
-        details_group = QGroupBox("Candidate Details")
+        # Candidate details section
+        details_group = QGroupBox("👤 Candidate Details")
         details_layout = QVBoxLayout(details_group)
+        
+        # Create scrollable area for details
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         
         self.text_details = QTextEdit()
         self.text_details.setReadOnly(True)
-        self.text_details.setPlaceholderText("Select a candidate to see details...")
-        details_layout.addWidget(self.text_details)
+        self.text_details.setPlaceholderText("Select a candidate to see detailed analysis...")
+        self.text_details.setStyleSheet("""
+            QTextEdit {
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                padding: 12px;
+                background-color: white;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                font-size: 12px;
+            }
+        """)
+        
+        scroll_area.setWidget(self.text_details)
+        details_layout.addWidget(scroll_area)
         
         layout.addWidget(details_group)
         
         return widget
     
-    def _create_status_bar(self):
-        """Create status bar with progress"""
+    def _create_enhanced_status_bar(self):
+        """Create enhanced status bar"""
         self.status_bar = self.statusBar()
+        self.status_bar.setStyleSheet("""
+            QStatusBar {
+                background-color: #f8f9fa;
+                border-top: 1px solid #dee2e6;
+                color: #495057;
+            }
+        """)
         
         # Progress bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
+        self.progress_bar.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+                background-color: #e9ecef;
+                height: 20px;
+            }
+            QProgressBar::chunk {
+                background-color: #007bff;
+                border-radius: 3px;
+            }
+        """)
         self.status_bar.addPermanentWidget(self.progress_bar)
         
         # Connection status
@@ -278,66 +433,72 @@ class MainWindow(QMainWindow):
         
         self.status_bar.showMessage("Ready")
     
-    def _apply_styling(self):
-        """Apply custom styling"""
+    def _apply_modern_styling(self):
+        """Apply modern styling to the application"""
         self.setStyleSheet("""
             QMainWindow {
-                background-color: #f5f5f5;
+                background-color: #ffffff;
             }
             QGroupBox {
                 font-weight: bold;
-                border: 2px solid #d0d0d0;
+                font-size: 14px;
+                border: 2px solid #e9ecef;
                 border-radius: 8px;
-                margin: 5px;
+                margin: 8px 0;
                 padding-top: 15px;
+                background-color: #f8f9fa;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 8px;
-                background-color: #f5f5f5;
-            }
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                padding: 10px 15px;
-                border-radius: 6px;
-                font-weight: bold;
-                min-width: 120px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-            QPushButton:pressed {
-                background-color: #3d8b40;
-            }
-            QPushButton:disabled {
-                background-color: #cccccc;
-                color: #666666;
+                left: 15px;
+                padding: 0 10px;
+                background-color: #ffffff;
+                border-radius: 4px;
             }
             QTableWidget {
-                gridline-color: #e0e0e0;
+                gridline-color: #dee2e6;
                 background-color: white;
-                border: 1px solid #d0d0d0;
-                border-radius: 4px;
+                border: 1px solid #dee2e6;
+                border-radius: 6px;
+                selection-background-color: #007bff;
+            }
+            QTableWidget::item {
+                padding: 8px;
+                border-bottom: 1px solid #f1f3f4;
             }
             QTableWidget::item:selected {
-                background-color: #3daee9;
+                background-color: #007bff;
                 color: white;
             }
-            QTextEdit {
-                border: 1px solid #d0d0d0;
-                border-radius: 6px;
-                padding: 8px;
-                background-color: white;
-                font-family: 'Consolas', 'Monaco', monospace;
+            QTableWidget QHeaderView::section {
+                background-color: #f8f9fa;
+                padding: 10px;
+                border: none;
+                border-bottom: 2px solid #dee2e6;
+                font-weight: bold;
             }
-            QComboBox {
-                padding: 8px;
-                border: 1px solid #d0d0d0;
-                border-radius: 4px;
+            QTextEdit {
+                border: 2px solid #e9ecef;
+                border-radius: 8px;
+                padding: 12px;
                 background-color: white;
+                font-size: 13px;
+            }
+            QTextEdit:focus {
+                border-color: #007bff;
+            }
+            QListWidget {
+                border: 2px solid #e9ecef;
+                border-radius: 8px;
+                background-color: white;
+                padding: 8px;
+            }
+            QSplitter::handle {
+                background-color: #dee2e6;
+                border-radius: 2px;
+            }
+            QSplitter::handle:hover {
+                background-color: #007bff;
             }
         """)
     
@@ -345,15 +506,18 @@ class MainWindow(QMainWindow):
         """Check Ollama connection status"""
         if self.ollama_client.is_connected():
             self.label_connection.setText("🟢 Ollama Connected")
-            self.label_connection.setStyleSheet("color: green;")
+            self.label_connection.setStyleSheet("color: #28a745; font-weight: bold;")
         else:
             self.label_connection.setText("🔴 Ollama Disconnected")
-            self.label_connection.setStyleSheet("color: red;")
+            self.label_connection.setStyleSheet("color: #dc3545; font-weight: bold;")
             QMessageBox.warning(
                 self, "Ollama Connection",
                 "Could not connect to Ollama. Please ensure Ollama is running.\n"
                 "Visit https://ollama.ai for installation instructions."
             )
+    
+    # [Keep all your existing methods: add_resume_files, on_files_dropped, clear_resumes, 
+    #  update_resume_count, load_jd, check_ready_state, run_orchestration, etc.]
     
     def add_resume_files(self):
         """Add resume files via file dialog"""
@@ -371,16 +535,21 @@ class MainWindow(QMainWindow):
         for path in file_paths:
             if is_supported_file(path) and path not in self.resume_paths:
                 self.resume_paths.append(path)
-                self.resume_list.addItem(str(path))
+                self.resume_list.addItem(str(path.name))  # Show only filename
         
         self.update_resume_count()
         self.check_ready_state()
+        
+        # Auto-preview first resume if none selected
+        if len(self.resume_paths) == 1:
+            self.preview_resume(self.resume_paths[0])
     
     def clear_resumes(self):
         """Clear all resume files"""
         self.resume_paths.clear()
         self.resume_list.clear()
         self.text_resume_preview.clear()
+        self.label_current_resume.setText("Select a resume to preview...")
         self.update_resume_count()
         self.check_ready_state()
     
@@ -388,6 +557,20 @@ class MainWindow(QMainWindow):
         """Update resume count display"""
         count = len(self.resume_paths)
         self.label_resume_count.setText(f"{count} resume(s) loaded")
+    
+    def preview_resume(self, resume_path: Path):
+        """Preview a resume in the center panel"""
+        try:
+            content, success = load_resume(resume_path)
+            if success:
+                self.text_resume_preview.setPlainText(content)
+                self.label_current_resume.setText(f"📋 {resume_path.name}")
+            else:
+                self.text_resume_preview.setPlainText("Failed to load resume content.")
+                self.label_current_resume.setText(f"❌ {resume_path.name} (Load Failed)")
+        except Exception as e:
+            logger.error(f"Error previewing resume: {e}")
+            self.text_resume_preview.setPlainText(f"Error loading resume: {str(e)}")
     
     def load_jd(self):
         """Load job description from file"""
@@ -426,7 +609,8 @@ class MainWindow(QMainWindow):
             return
         
         # Update model
-        selected_model = self.combo_model.currentText()
+        selected_model_text = self.combo_model.currentText()
+        selected_model = selected_model_text.split(" ")[0]  # Extract model name
         self.orchestrator.model = selected_model
         
         # Start processing
@@ -444,7 +628,7 @@ class MainWindow(QMainWindow):
     def start_processing(self):
         """Start processing UI state"""
         self.btn_run.setEnabled(False)
-        self.btn_run.setText("Processing...")
+        self.btn_run.setText("🔄 Processing...")
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
         self.progress_bar.setMaximum(len(self.resume_paths))
@@ -458,15 +642,16 @@ class MainWindow(QMainWindow):
     
     def on_processing_complete(self, results: List):
         """Handle processing completion"""
-        self.current_results = results
+        self.current_results = results if isinstance(results, list) else [results] if results else []
         self.populate_results_table()
         self.finish_processing()
         
-        if results:
+        if self.current_results:
             self.btn_export.setEnabled(True)
             QMessageBox.information(
                 self, "Analysis Complete",
-                f"Successfully analyzed {len(results)} candidates!"
+                f"Successfully analyzed {len(self.current_results)} candidates!\n"
+                f"Results are sorted by score (highest first)."
             )
         else:
             QMessageBox.warning(
@@ -483,48 +668,90 @@ class MainWindow(QMainWindow):
     def finish_processing(self):
         """Finish processing UI state"""
         self.btn_run.setEnabled(True)
-        self.btn_run.setText("▶️ Analyze Resumes")
+        self.btn_run.setText("🚀 Analyze Resumes")
         self.progress_bar.setVisible(False)
         self.status_bar.showMessage("Ready")
         self.check_ready_state()
     
     def populate_results_table(self):
-        """Populate results table"""
+        """Populate results table with analysis results"""
+        if not self.current_results:
+            return
+        
         self.table_results.setRowCount(len(self.current_results))
         
         for row, result in enumerate(self.current_results):
-            # Candidate name
-            name_item = QTableWidgetItem(result.name)
-            self.table_results.setItem(row, 0, name_item)
-            
-            # Score with color coding
-            score_item = QTableWidgetItem(f"{result.score:.1f}")
-            score_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            
-            # Color code by score
-            if result.score >= 80:
-                score_item.setBackground(Qt.GlobalColor.green)
-            elif result.score >= 60:
-                score_item.setBackground(Qt.GlobalColor.yellow)
-            else:
-                score_item.setBackground(Qt.GlobalColor.red)
-            
-            self.table_results.setItem(row, 1, score_item)
-            
-            # Recommendation
-            rec_item = QTableWidgetItem(result.recommendation.title())
-            rec_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.table_results.setItem(row, 2, rec_item)
-            
-            # Top skills
-            skills_text = ", ".join(result.skills[:3])
-            if len(result.skills) > 3:
-                skills_text += "..."
-            skills_item = QTableWidgetItem(skills_text)
-            self.table_results.setItem(row, 3, skills_item)
+            try:
+                # Handle both CandidateReport objects and dictionaries
+                if hasattr(result, 'name'):
+                    name = result.name
+                    score = result.score
+                    recommendation = getattr(result, 'recommendation', 'unknown')
+                    skills = getattr(result, 'skills', [])
+                elif isinstance(result, dict):
+                    name = result.get('name', 'Unknown')
+                    score = result.get('score', 0.0)
+                    recommendation = result.get('recommendation', 'unknown')
+                    skills = result.get('skills', [])
+                else:
+                    logger.error(f"Unexpected result type at row {row}: {type(result)}")
+                    continue
+                
+                # Candidate name
+                name_item = QTableWidgetItem(str(name))
+                name_item.setToolTip(str(name))
+                self.table_results.setItem(row, 0, name_item)
+                
+                # Score with color coding
+                score_item = QTableWidgetItem(f"{float(score):.1f}")
+                score_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                
+                # Color code by score
+                if score >= 80:
+                    score_item.setBackground(Qt.GlobalColor.green)
+                    score_item.setForeground(Qt.GlobalColor.white)
+                elif score >= 60:
+                    score_item.setBackground(Qt.GlobalColor.yellow)
+                    score_item.setForeground(Qt.GlobalColor.black)
+                else:
+                    score_item.setBackground(Qt.GlobalColor.red)
+                    score_item.setForeground(Qt.GlobalColor.white)
+                
+                self.table_results.setItem(row, 1, score_item)
+                
+                # Recommendation
+                rec_item = QTableWidgetItem(str(recommendation).title())
+                rec_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                
+                # Color code recommendation
+                if recommendation.lower() == 'hire':
+                    rec_item.setForeground(Qt.GlobalColor.darkGreen)
+                elif recommendation.lower() == 'maybe':
+                    rec_item.setForeground(Qt.GlobalColor.darkYellow)
+                else:
+                    rec_item.setForeground(Qt.GlobalColor.darkRed)
+                
+                self.table_results.setItem(row, 2, rec_item)
+                
+                # Top skills
+                if isinstance(skills, list) and skills:
+                    skills_text = ", ".join(str(s) for s in skills[:3])
+                    if len(skills) > 3:
+                        skills_text += "..."
+                else:
+                    skills_text = "No skills listed"
+                skills_item = QTableWidgetItem(skills_text)
+                skills_item.setToolTip(", ".join(str(s) for s in skills) if skills else "No skills")
+                self.table_results.setItem(row, 3, skills_item)
+                
+            except Exception as e:
+                logger.error(f"Error populating row {row}: {e}")
+                # Add error row
+                error_item = QTableWidgetItem(f"Error: {str(e)}")
+                self.table_results.setItem(row, 0, error_item)
         
-        # Auto-select first row
-        if self.current_results:
+        # Auto-select first row if results exist
+        if self.current_results and self.table_results.rowCount() > 0:
             self.table_results.selectRow(0)
     
     def on_result_selected(self):
@@ -540,33 +767,88 @@ class MainWindow(QMainWindow):
     
     def display_candidate_details(self, result):
         """Display detailed candidate information"""
-        details = f"""CANDIDATE: {result.name}
-FILENAME: {result.filename}
-SCORE: {result.score:.1f}/100
-RECOMMENDATION: {result.recommendation.upper()}
+        try:
+            # Handle both object and dict formats
+            if hasattr(result, 'name'):
+                name = result.name
+                filename = getattr(result, 'filename', 'Unknown')
+                score = result.score
+                recommendation = getattr(result, 'recommendation', 'unknown')
+                reasoning = getattr(result, 'reasoning', 'No reasoning')
+                strengths = getattr(result, 'strengths', [])
+                concerns = getattr(result, 'concerns', [])
+                skills = getattr(result, 'skills', [])
+                education = getattr(result, 'education', [])
+                experience = getattr(result, 'experience', [])
+                questions = getattr(result, 'questions', [])
+            else:
+                name = result.get('name', 'Unknown')
+                filename = result.get('filename', 'Unknown')
+                score = result.get('score', 0.0)
+                recommendation = result.get('recommendation', 'unknown')
+                reasoning = result.get('reasoning', 'No reasoning')
+                strengths = result.get('strengths', [])
+                concerns = result.get('concerns', [])
+                skills = result.get('skills', [])
+                education = result.get('education', [])
+                experience = result.get('experience', [])
+                questions = result.get('questions', [])
+            
+            # Format details with better structure
+            details = f"""
+<h2 style="color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 5px;">
+🧑‍💼 {name}
+</h2>
 
-REASONING:
-{result.reasoning}
+<div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0;">
+<h3 style="color: #495057; margin-top: 0;">📊 Analysis Summary</h3>
+<p><strong>File:</strong> {filename}</p>
+<p><strong>Score:</strong> <span style="font-size: 18px; font-weight: bold; color: {'#28a745' if score >= 80 else '#ffc107' if score >= 60 else '#dc3545'};">{score:.1f}/100</span></p>
+<p><strong>Recommendation:</strong> <span style="font-weight: bold; color: {'#28a745' if recommendation.lower() == 'hire' else '#ffc107' if recommendation.lower() == 'maybe' else '#dc3545'};">{recommendation.upper()}</span></p>
+</div>
 
-STRENGTHS:
-{chr(10).join('• ' + s for s in result.strengths)}
+<h3 style="color: #28a745;">💡 Reasoning</h3>
+<p style="background-color: #f8f9fa; padding: 10px; border-radius: 6px; border-left: 4px solid #28a745;">
+{reasoning}
+</p>
 
-CONCERNS:
-{chr(10).join('• ' + c for c in result.concerns)}
+<h3 style="color: #007bff;">💪 Strengths</h3>
+<ul style="background-color: #f8f9fa; padding: 15px; border-radius: 6px;">
+{chr(10).join(f'<li style="margin: 5px 0;">{s}</li>' for s in strengths) if strengths else '<li>None listed</li>'}
+</ul>
 
-SKILLS:
-{', '.join(result.skills)}
+<h3 style="color: #dc3545;">⚠️ Concerns</h3>
+<ul style="background-color: #f8f9fa; padding: 15px; border-radius: 6px;">
+{chr(10).join(f'<li style="margin: 5px 0;">{c}</li>' for c in concerns) if concerns else '<li>None listed</li>'}
+</ul>
 
-EDUCATION:
-{chr(10).join('• ' + e for e in result.education)}
+<h3 style="color: #6f42c1;">🛠️ Skills & Technologies</h3>
+<div style="background-color: #f8f9fa; padding: 15px; border-radius: 6px;">
+{', '.join(str(s) for s in skills[:15]) if skills else 'No skills listed'}
+{('...' if len(skills) > 15 else '') if skills else ''}
+</div>
 
-EXPERIENCE:
-{chr(10).join(f'• {exp.position} at {exp.company} ({exp.duration})' for exp in result.experience)}
+<h3 style="color: #fd7e14;">🎓 Education</h3>
+<ul style="background-color: #f8f9fa; padding: 15px; border-radius: 6px;">
+{chr(10).join(f'<li style="margin: 5px 0;">{e}</li>' for e in education[:5]) if education else '<li>No education listed</li>'}
+</ul>
 
-INTERVIEW QUESTIONS:
-{chr(10).join(f'{i+1}. {q}' for i, q in enumerate(result.questions))}
+<h3 style="color: #20c997;">💼 Experience</h3>
+<ul style="background-color: #f8f9fa; padding: 15px; border-radius: 6px;">
+{chr(10).join(f'<li style="margin: 8px 0;"><strong>{exp.position if hasattr(exp, "position") else exp.get("position", "Unknown")}</strong> at <em>{exp.company if hasattr(exp, "company") else exp.get("company", "Unknown")}</em> ({exp.duration if hasattr(exp, "duration") else exp.get("duration", "Unknown")})</li>' for exp in experience[:5]) if experience else '<li>No experience listed</li>'}
+</ul>
+
+<h3 style="color: #e83e8c;">❓ Suggested Interview Questions</h3>
+<ol style="background-color: #f8f9fa; padding: 15px; border-radius: 6px;">
+{chr(10).join(f'<li style="margin: 8px 0;">{q}</li>' for q in questions[:8]) if questions else '<li>No questions generated</li>'}
+</ol>
 """
-        self.text_details.setPlainText(details)
+            
+            self.text_details.setHtml(details)
+            
+        except Exception as e:
+            logger.error(f"Error displaying candidate details: {e}")
+            self.text_details.setPlainText(f"Error displaying details: {str(e)}")
     
     def export_results(self):
         """Export results to JSON"""
@@ -585,17 +867,21 @@ INTERVIEW QUESTIONS:
                     "metadata": {
                         "total_candidates": len(self.current_results),
                         "model_used": self.combo_model.currentText(),
-                        "timestamp": "2024-01-01T00:00:00Z"  # You can add actual timestamp
+                        "timestamp": "2024-01-01T00:00:00Z",
+                        "application": "Resume Selector v2.0"
                     },
-                    "results": [result.dict() for result in self.current_results]
+                    "results": [
+                        result.dict() if hasattr(result, 'dict') else result 
+                        for result in self.current_results
+                    ]
                 }
                 
                 with open(file_path, 'w', encoding='utf-8') as f:
-                    json.dump(export_data, f, indent=2, ensure_ascii=False)
+                    json.dump(export_data, f, indent=2, ensure_ascii=False, default=str)
                 
                 QMessageBox.information(
                     self, "Export Successful",
-                    f"Results exported to:\n{file_path}"
+                    f"Results exported successfully to:\n{file_path}"
                 )
                 
             except Exception as e:
@@ -619,5 +905,4 @@ INTERVIEW QUESTIONS:
             else:
                 event.ignore()
         else:
-            self.config.save()
             event.accept()
